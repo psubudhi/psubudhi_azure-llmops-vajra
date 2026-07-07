@@ -25,6 +25,18 @@ class Settings:
     runtime_dir: Path = _env_path("VAJRA_RUNTIME_DIR", "STEELCARE_RUNTIME_DIR", "./data/runtime")
     sqlite_db_path: Path = _env_path("VAJRA_SQLITE_DB", "STEELCARE_SQLITE_DB", "./data/runtime/vajra_ops.sqlite")
     langgraph_memory_backend: str = os.getenv("LANGGRAPH_MEMORY_BACKEND", "memory")
+    llm_provider: str = os.getenv("VAJRA_LLM_PROVIDER", "vllm")
+    llm_base_url: str = os.getenv(
+        "VAJRA_LLM_BASE_URL",
+        "http://vajra-llm-predictor.inference.svc.cluster.local/v1",
+    )
+    llm_api_key: str = os.getenv("VAJRA_LLM_API_KEY", "EMPTY")
+    llm_model: str = os.getenv("VAJRA_LLM_MODEL", "vajra-llama")
+    llm_timeout_seconds: float = float(
+        os.getenv("VAJRA_LLM_TIMEOUT_SECONDS", "240")
+    )
+    llm_max_retries: int = int(os.getenv("VAJRA_LLM_MAX_RETRIES", "2"))
+    llm_max_tokens: int = int(os.getenv("VAJRA_LLM_MAX_TOKENS", "384"))
 
     @property
     def model_dir(self) -> Path:

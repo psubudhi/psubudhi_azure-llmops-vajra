@@ -8,10 +8,32 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 from .config import settings
 
+#from src.agentic.config import settings
+
+# def get_llm(temperature: float = 0.1) -> ChatOpenAI:
+#     return ChatOpenAI(model=settings.openai_model, temperature=temperature)
+
 
 def get_llm(temperature: float = 0.1) -> ChatOpenAI:
-    return ChatOpenAI(model=settings.openai_model, temperature=temperature)
+    if settings.llm_provider.lower() == "vllm":
+        return ChatOpenAI(
+            base_url=settings.llm_base_url,
+            api_key=settings.llm_api_key,
+            model=settings.llm_model,
+            temperature=temperature,
+            max_tokens=settings.llm_max_tokens,
+            timeout=settings.llm_timeout_seconds,
+            max_retries=settings.llm_max_retries,
+        )
 
+    return ChatOpenAI(
+        api_key=settings.openai_api_key,
+        model=settings.openai_model,
+        temperature=temperature,
+        max_tokens=settings.llm_max_tokens,
+        timeout=settings.llm_timeout_seconds,
+        max_retries=settings.llm_max_retries,
+    )
 
 def _fallback_text(system: str, user: str, exc: Exception | None = None) -> str:
     return (
