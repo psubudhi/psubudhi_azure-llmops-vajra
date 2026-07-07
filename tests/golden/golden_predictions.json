@@ -1,0 +1,110 @@
+{
+  "generated_at": "2026-07-05T06:08:01.166257+00:00",
+  "feature_count": 706,
+  "row_count": 20003,
+  "model_metadata_sha256": "f79a7c4e9f0af10d3af0530ff13ecaac8d76d20266a8b764376db9943414a234",
+  "cases": [
+    {
+      "name": "normal",
+      "row_index": 17562,
+      "timestamp_index": 17562,
+      "expected": {
+        "alarm_id": "ALM-017562",
+        "timestamp_index": 17562,
+        "row_index": 17562,
+        "is_alert": false,
+        "anomaly_probability": 0.0148,
+        "anomaly_threshold": 0.13,
+        "predicted_fault": "anomaly_bearing_5",
+        "predicted_stand": "stand_5",
+        "asset_name": "TCM Stand 5",
+        "fault_confidence": 0.0025,
+        "predicted_rul_band": "within_1_shift",
+        "proxy_rul_observations": 35.69,
+        "proxy_rul_shifts": 0.18,
+        "trend_risk": 0.1231,
+        "risk_score": 29.15,
+        "risk_level": "low",
+        "health_index": 70.85,
+        "evidence": [
+          "force_4: recent z-score -1.23",
+          "reduction_4: recent z-score -0.77",
+          "torque_3: recent z-score 0.72",
+          "tension_1: recent z-score 0.62",
+          "force_3: recent z-score 0.61",
+          "tension_4: recent z-score 0.57",
+          "motor_power_4: recent z-score -0.57",
+          "tension_5: recent z-score 0.55"
+        ]
+      }
+    },
+    {
+      "name": "warning",
+      "row_index": 17128,
+      "timestamp_index": 17128,
+      "expected": {
+        "alarm_id": "ALM-017128",
+        "timestamp_index": 17128,
+        "row_index": 17128,
+        "is_alert": true,
+        "anomaly_probability": 0.3545,
+        "anomaly_threshold": 0.13,
+        "predicted_fault": "anomaly_reduction",
+        "predicted_stand": "mill_level",
+        "asset_name": "TCM Mill Level",
+        "fault_confidence": 0.2814,
+        "predicted_rul_band": "within_1_shift",
+        "proxy_rul_observations": 30.3,
+        "proxy_rul_shifts": 0.15,
+        "trend_risk": 0.4356,
+        "risk_score": 49.91,
+        "risk_level": "medium",
+        "health_index": 50.09,
+        "evidence": [
+          "torque_3: recent z-score 3.11",
+          "force_1: recent z-score -2.64",
+          "torque_1: recent z-score -2.61",
+          "reduction_1: recent z-score -2.60",
+          "gap_1: recent z-score 1.76",
+          "tension_0: recent z-score 1.62",
+          "gap_3: recent z-score 1.60",
+          "gap_2: recent z-score 1.57"
+        ]
+      }
+    },
+    {
+      "name": "critical",
+      "row_index": 18792,
+      "timestamp_index": 18792,
+      "expected": {
+        "alarm_id": "ALM-018792",
+        "timestamp_index": 18792,
+        "row_index": 18792,
+        "is_alert": true,
+        "anomaly_probability": 1.0,
+        "anomaly_threshold": 0.13,
+        "predicted_fault": "anomaly_reduction",
+        "predicted_stand": "mill_level",
+        "asset_name": "TCM Mill Level",
+        "fault_confidence": 0.9948,
+        "predicted_rul_band": "immediate",
+        "proxy_rul_observations": 61.73,
+        "proxy_rul_shifts": 0.31,
+        "trend_risk": 0.6203,
+        "risk_score": 92.23,
+        "risk_level": "critical",
+        "health_index": 7.77,
+        "evidence": [
+          "torque_5: recent z-score 3.42",
+          "torque_3: recent z-score 3.21",
+          "torque_4: recent z-score 3.11",
+          "force_3: recent z-score 3.11",
+          "reduction_1: recent z-score -3.10",
+          "force_5: recent z-score 2.95",
+          "force_4: recent z-score 2.74",
+          "gap_1: recent z-score 2.01"
+        ]
+      }
+    }
+  ]
+}

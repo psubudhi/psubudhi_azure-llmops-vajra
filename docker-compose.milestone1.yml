@@ -1,0 +1,48 @@
+services:
+  prediction-api:
+    build:
+      context: .
+      dockerfile: services/prediction_api/Dockerfile
+    image: vajra-prediction-api:0.1.0
+    environment:
+      TCM_MODELLING_ROOT: /app/tcm_modelling
+      VAJRA_PREDICTION_BACKEND: ${VAJRA_PREDICTION_BACKEND:-local}
+      VAJRA_TRITON_URL: triton:8000
+      VAJRA_TRITON_MODEL_NAME: vajra_predictor
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  streamlit-ui:
+    build:
+      context: .
+      dockerfile: services/ui/Dockerfile
+    image: vajra-ui:0.1.0
+    environment:
+      VAJRA_PREDICTION_API_URL: http://prediction-api:8000
+      TCM_MODELLING_ROOT: /app/tcm_modelling
+    ports:
+      - "8501:8501"
+    depends_on:
+      prediction-api:
+        condition: service_healthy
+
+  triton:
+    profiles: ["triton"]
+    build:
+      context: .
+      dockerfile: infra/triton/Dockerfile
+    image: vajra-triton:0.1.0
+    ports:
+      - "8002:8000"
+      - "8003:8001"
+      - "8004:8002"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/v2/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 30

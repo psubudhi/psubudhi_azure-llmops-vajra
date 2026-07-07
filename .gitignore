@@ -1,0 +1,136 @@
+# ============================================================
+# Secrets and credentials
+# ============================================================
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.pfx
+*.crt
+
+secrets/
+.streamlit/secrets.toml
+
+# Azure and cloud credentials
+.azure/
+.aws/
+kubeconfig
+*.kubeconfig
+
+# ============================================================
+# Python
+# ============================================================
+.venv/
+venv/
+env/
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+build/
+dist/
+*.egg-info/
+
+# ============================================================
+# IDE and operating-system files
+# ============================================================
+.vscode/
+.idea/
+
+.DS_Store
+Thumbs.db
+
+# ============================================================
+# Runtime files
+# ============================================================
+*.log
+logs/
+
+*.sqlite
+*.sqlite3
+*.db
+
+data/runtime/
+tmp/
+temp/
+
+# ============================================================
+# Terraform
+# ============================================================
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+
+terraform.tfvars
+terraform.tfvars.json
+
+backend.hcl
+
+crash.log
+crash.*.log
+
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Keep templates/examples
+!terraform.tfvars.example
+!backend.hcl.example
+
+# ============================================================
+# Local model and package caches
+# ============================================================
+.cache/
+.cache/huggingface/
+huggingface/
+models-cache/
+hf-cache/
+
+# Llama/vLLM model cache must never be committed
+models/huggingface/
+vllm-cache/
+
+# ============================================================
+# Docker-generated artifacts
+# ============================================================
+*.tar
+*.tar.gz
+*.tgz
+docker-images/
+
+# ============================================================
+# Jupyter
+# ============================================================
+.ipynb_checkpoints/
+
+# ============================================================
+# Generated testing output
+# ============================================================
+test-results/
+reports/
+junit.xml
+
+# ============================================================
+# Local backups
+# ============================================================
+*_backup/
+*_backup_*/
+*.bak
+
+# ============================================================
+# IMPORTANT:
+# Vajra .joblib/.parquet/.onnx artifacts are intentionally
+# NOT ignored because they will be managed using Git LFS.
+# ============================================================

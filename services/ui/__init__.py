@@ -1,0 +1,1 @@
+"""UI-side adapters."""

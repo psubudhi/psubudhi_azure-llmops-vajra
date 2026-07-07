@@ -1,0 +1,26 @@
+name: "vajra_predictor"
+backend: "python"
+max_batch_size: 0
+
+input [
+  {
+    name: "REQUEST_JSON"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+
+output [
+  {
+    name: "RESULT_JSON"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_CPU
+  }
+]

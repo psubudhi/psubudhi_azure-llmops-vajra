@@ -1,0 +1,658 @@
+openapi: 3.1.0
+info:
+  title: Vajra V2 Platform API
+  version: 1.0.0-draft
+  description: Azure-ready API contract for Vajra predictive maintenance, RAG, agents, HITL and operations.
+servers:
+  - url: /api/v1
+paths:
+  /version:
+    get:
+      summary: Return application and dependency versions
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+  /telemetry/events:
+    post:
+      summary: Ingest one or more telemetry events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryBatch'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptedResponse'
+  /telemetry/window:
+    get:
+      summary: Return an asset telemetry window
+      parameters:
+        - in: query
+          name: asset_id
+          required: true
+          schema: {type: string}
+        - in: query
+          name: row_index
+          schema: {type: integer, minimum: 0}
+        - in: query
+          name: window
+          schema: {type: integer, minimum: 1, maximum: 2000, default: 250}
+      responses:
+        '200':
+          description: Telemetry window
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metadata: {$ref: '#/components/schemas/ResponseMetadata'}
+                  records:
+                    type: array
+                    items: {type: object, additionalProperties: true}
+  /demo/scenarios:
+    post:
+      summary: Create a deterministic demo scenario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScenarioCreate'
+      responses:
+        '201':
+          description: Scenario created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metadata: {$ref: '#/components/schemas/ResponseMetadata'}
+                  scenario_run_id: {type: string, format: uuid}
+                  alarm_id: {type: string}
+                  row_index: {type: integer}
+  /demo/scenarios/{scenario_run_id}:
+    delete:
+      summary: Delete or deactivate a demo scenario
+      parameters:
+        - in: path
+          name: scenario_run_id
+          required: true
+          schema: {type: string}
+      responses:
+        '204': {description: Removed}
+  /predictions:
+    post:
+      summary: Run Vajra predictive inference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictionRequest'
+      responses:
+        '200':
+          description: Prediction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictionResponse'
+  /assets/topology:
+    get:
+      summary: Return five-stand plant topology health cards
+      parameters:
+        - in: query
+          name: row_index
+          schema: {type: integer, minimum: 0}
+        - in: query
+          name: strategy
+          schema: {type: string, enum: [latest, highest_risk], default: latest}
+      responses:
+        '200':
+          description: Topology
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metadata: {$ref: '#/components/schemas/ResponseMetadata'}
+                  assets:
+                    type: array
+                    items: {type: object, additionalProperties: true}
+  /alarms:
+    get:
+      summary: Return current alarm/maintenance queue
+      parameters:
+        - in: query
+          name: limit
+          schema: {type: integer, minimum: 1, maximum: 200, default: 25}
+        - in: query
+          name: min_risk
+          schema: {type: string, enum: [low, medium, high, critical], default: high}
+      responses:
+        '200':
+          description: Alarm list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metadata: {$ref: '#/components/schemas/ResponseMetadata'}
+                  alarms:
+                    type: array
+                    items: {$ref: '#/components/schemas/AlarmSummary'}
+  /alarms/{alarm_id}:
+    get:
+      summary: Return alarm details
+      parameters:
+        - in: path
+          name: alarm_id
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Alarm details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metadata: {$ref: '#/components/schemas/ResponseMetadata'}
+                  alarm: {type: object, additionalProperties: true}
+        '404': {description: Not found}
+  /rag/query:
+    post:
+      summary: Retrieve evidence and optionally generate a grounded answer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RagQueryRequest'
+      responses:
+        '200':
+          description: Grounded answer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RagQueryResponse'
+  /rag/ingestion/runs:
+    post:
+      summary: Trigger an Airflow RAG ingestion run
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                corpus_version: {type: string}
+                source_path: {type: string}
+                promote_on_pass: {type: boolean, default: false}
+      responses:
+        '202':
+          description: Run accepted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AcceptedResponse'}
+  /rag/ingestion/runs/{run_id}:
+    get:
+      summary: Return RAG ingestion status
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Status
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: true}
+  /rag/indexes:
+    get:
+      summary: List RAG index versions and aliases
+      responses:
+        '200':
+          description: Index list
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: true}
+  /rag/indexes/{version}/promote:
+    post:
+      summary: Promote a validated index version
+      parameters:
+        - in: path
+          name: version
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Promoted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AcceptedResponse'}
+  /agents/investigations:
+    post:
+      summary: Start a Vajra LangGraph investigation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvestigationRequest'
+      responses:
+        '202':
+          description: Investigation started or paused for approval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvestigationResponse'
+  /agents/runs/{run_id}:
+    get:
+      summary: Return agent run state and result
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Agent run
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/InvestigationResponse'}
+  /agents/runs/{run_id}/resume:
+    post:
+      summary: Resume a persisted run after an approved interrupt
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema: {type: string}
+      responses:
+        '202':
+          description: Resumed
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AcceptedResponse'}
+  /approvals:
+    get:
+      summary: List approval requests
+      parameters:
+        - in: query
+          name: status
+          schema: {type: string, enum: [pending, approved, rejected, expired]}
+      responses:
+        '200':
+          description: Approval list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Approval'}
+  /approvals/{approval_id}/decision:
+    post:
+      summary: Approve or reject a proposed action
+      parameters:
+        - in: path
+          name: approval_id
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecision'
+      responses:
+        '200':
+          description: Decision saved
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Approval'}
+  /logbook:
+    get:
+      summary: List operational logbook events
+      parameters:
+        - in: query
+          name: limit
+          schema: {type: integer, minimum: 1, maximum: 500, default: 100}
+      responses:
+        '200':
+          description: Events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: object, additionalProperties: true}
+  /logbook/{log_id}:
+    get:
+      summary: Return a logbook event
+      parameters:
+        - in: path
+          name: log_id
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Event
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: true}
+    patch:
+      summary: Update logbook status
+      parameters:
+        - in: path
+          name: log_id
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: {type: string}
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: true}
+  /feedback:
+    post:
+      summary: Save engineer feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FeedbackCreate'}
+      responses:
+        '201':
+          description: Saved
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: true}
+    get:
+      summary: List engineer feedback
+      responses:
+        '200':
+          description: Feedback list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: object, additionalProperties: true}
+  /evaluations/runs:
+    post:
+      summary: Start a model/RAG/agent evaluation run
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                suite: {type: string, enum: [all, predictive, rag, agent, guardrail, canary]}
+                candidate_version: {type: string}
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AcceptedResponse'}
+  /evaluations/runs/{run_id}:
+    get:
+      summary: Return evaluation results
+      parameters:
+        - in: path
+          name: run_id
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Evaluation
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: true}
+  /model-health:
+    get:
+      summary: Return predictive, RAG, agent and drift health summary
+      responses:
+        '200':
+          description: Health summary
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: true}
+  /controls/kill-switches:
+    get:
+      summary: List kill-switch states
+      responses:
+        '200':
+          description: Switches
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: {type: boolean}}
+  /controls/kill-switches/{name}:
+    put:
+      summary: Enable or disable a kill switch
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled, reason]
+              properties:
+                enabled: {type: boolean}
+                reason: {type: string, minLength: 3}
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: {type: object, additionalProperties: true}
+components:
+  schemas:
+    ResponseMetadata:
+      type: object
+      required: [request_id, generated_at, app_version]
+      properties:
+        request_id: {type: string, format: uuid}
+        generated_at: {type: string, format: date-time}
+        app_version: {type: string}
+        predictive_model_version: {type: [string, 'null']}
+        llm_model_version: {type: [string, 'null']}
+        prompt_version: {type: [string, 'null']}
+        rag_index_version: {type: [string, 'null']}
+    VersionResponse:
+      type: object
+      properties:
+        metadata: {$ref: '#/components/schemas/ResponseMetadata'}
+        dependencies: {type: object, additionalProperties: {type: string}}
+    AcceptedResponse:
+      type: object
+      properties:
+        metadata: {$ref: '#/components/schemas/ResponseMetadata'}
+        run_id: {type: string}
+        status: {type: string}
+    TelemetryEvent:
+      type: object
+      required: [asset_id, timestamp, values]
+      properties:
+        asset_id: {type: string}
+        timestamp: {type: string, format: date-time}
+        values: {type: object, additionalProperties: {type: number}}
+    TelemetryBatch:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          minItems: 1
+          items: {$ref: '#/components/schemas/TelemetryEvent'}
+    ScenarioCreate:
+      type: object
+      required: [scenario, stand, severity, base_row_index]
+      properties:
+        scenario: {type: string}
+        stand: {type: integer, minimum: 1, maximum: 5}
+        severity: {type: number, minimum: 0.1, maximum: 3.0}
+        base_row_index: {type: integer, minimum: 0}
+    PredictionRequest:
+      oneOf:
+        - type: object
+          required: [source, row_index]
+          properties:
+            source: {const: replay}
+            row_index: {type: integer, minimum: 0}
+            scenario_run_id: {type: string}
+        - type: object
+          required: [source, asset_id, timestamp, features]
+          properties:
+            source: {const: features}
+            asset_id: {type: string}
+            timestamp: {type: string, format: date-time}
+            features: {type: object, additionalProperties: {type: number}}
+    PredictionResponse:
+      type: object
+      required: [metadata, prediction]
+      properties:
+        metadata: {$ref: '#/components/schemas/ResponseMetadata'}
+        prediction:
+          type: object
+          required: [alarm_id, risk_level, risk_score, predicted_fault]
+          properties:
+            alarm_id: {type: string}
+            timestamp_index: {type: integer}
+            row_index: {type: integer}
+            asset_name: {type: string}
+            is_alert: {type: boolean}
+            anomaly_probability: {type: number}
+            anomaly_threshold: {type: number}
+            predicted_fault: {type: string}
+            predicted_stand: {type: string}
+            fault_confidence: {type: number}
+            secondary_faults: {type: array, items: {type: object, additionalProperties: true}}
+            predicted_rul_band: {type: string}
+            proxy_rul_observations: {type: number}
+            proxy_rul_shifts: {type: number}
+            trend_risk: {type: number}
+            risk_score: {type: number}
+            risk_level: {type: string}
+            health_index: {type: number}
+            evidence: {type: array, items: {type: string}}
+            similar_historical_cases: {type: array, items: {type: object, additionalProperties: true}}
+            disclaimer: {type: string}
+    AlarmSummary:
+      type: object
+      properties:
+        alarm_id: {type: string}
+        asset: {type: string}
+        fault: {type: string}
+        risk_level: {type: string}
+        risk_score: {type: number}
+        row_index: {type: integer}
+        status: {type: string}
+    RagQueryRequest:
+      type: object
+      required: [query]
+      properties:
+        query: {type: string, minLength: 1, maxLength: 8000}
+        asset_type: {type: string}
+        tenant_id: {type: string}
+        top_k: {type: integer, minimum: 1, maximum: 20, default: 5}
+        generate_answer: {type: boolean, default: true}
+    Citation:
+      type: object
+      required: [document_id, source, chunk_id, content]
+      properties:
+        document_id: {type: string}
+        source: {type: string}
+        page: {type: [integer, 'null']}
+        section: {type: [string, 'null']}
+        chunk_id: {type: string}
+        score: {type: number}
+        content: {type: string}
+    RagQueryResponse:
+      type: object
+      properties:
+        metadata: {$ref: '#/components/schemas/ResponseMetadata'}
+        answer: {type: string}
+        citations:
+          type: array
+          items: {$ref: '#/components/schemas/Citation'}
+        retrieval_confidence: {type: number}
+        grounded: {type: boolean}
+        token_usage: {type: object, additionalProperties: true}
+    InvestigationRequest:
+      type: object
+      required: [query]
+      properties:
+        query: {type: string, minLength: 1, maxLength: 8000}
+        thread_id: {type: string, maxLength: 255}
+        alarm_id: {type: string}
+        row_index: {type: integer, minimum: 0}
+        answer_mode: {type: string, enum: [concise, detailed], default: concise}
+        tenant_id: {type: string, default: default}
+    InvestigationResponse:
+      type: object
+      properties:
+        metadata: {$ref: '#/components/schemas/ResponseMetadata'}
+        run_id: {type: string, format: uuid}
+        thread_id: {type: string}
+        status: {type: string, enum: [queued, running, waiting_approval, completed, failed, cancelled]}
+        final_answer: {type: [string, 'null']}
+        prediction: {type: [object, 'null'], additionalProperties: true}
+        citations: {type: array, items: {$ref: '#/components/schemas/Citation'}}
+        decision_trace: {type: array, items: {type: object, additionalProperties: true}}
+        approval: {oneOf: [{$ref: '#/components/schemas/Approval'}, {type: 'null'}]}
+        errors: {type: array, items: {type: string}}
+    Approval:
+      type: object
+      properties:
+        approval_id: {type: string, format: uuid}
+        run_id: {type: string, format: uuid}
+        status: {type: string, enum: [pending, approved, rejected, expired]}
+        action_type: {type: string}
+        action_payload: {type: object, additionalProperties: true}
+        risk_level: {type: string}
+        requested_at: {type: string, format: date-time}
+        decided_at: {type: [string, 'null'], format: date-time}
+    ApprovalDecision:
+      type: object
+      required: [decision, decided_by]
+      properties:
+        decision: {type: string, enum: [approved, rejected]}
+        decided_by: {type: string}
+        reason: {type: string}
+    FeedbackCreate:
+      type: object
+      required: [actual_fault, action_taken, outcome]
+      properties:
+        alarm_id: {type: string}
+        run_id: {type: string}
+        row_index: {type: integer}
+        asset: {type: string}
+        predicted_fault: {type: string}
+        risk_level: {type: string}
+        actual_fault: {type: string}
+        action_taken: {type: string}
+        outcome: {type: string}
+        status: {type: string}
+        engineer_name: {type: string}
+        notes: {type: string}
