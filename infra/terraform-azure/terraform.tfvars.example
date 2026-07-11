@@ -1,0 +1,17 @@
+subscription_id     = "REPLACE_SUBSCRIPTION_ID"
+resource_group_name = "rg-vajra-poc"
+location            = "centralindia"
+cluster_name        = "aks-vajra-poc"
+
+system_vm_size      = "REPLACE_APPROVED_SYSTEM_SKU"
+system_node_count   = 2
+
+system_os_disk_size_gb = 128
+system_max_pods        = 40
+
+create_llm_node_pool = false
+
+llm_vm_size         = "REPLACE_APPROVED_LLM_SKU"
+llm_node_count      = 1
+llm_os_disk_size_gb = 128
+llm_max_pods        = 30
