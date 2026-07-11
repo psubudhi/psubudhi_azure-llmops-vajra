@@ -134,3 +134,5 @@ junit.xml
 # Vajra .joblib/.parquet/.onnx artifacts are intentionally
 # NOT ignored because they will be managed using Git LFS.
 # ============================================================
+MILESTONE1_RUNBOOK.md
+NEXT_ACTIONS_AZURE_VLLM.md
