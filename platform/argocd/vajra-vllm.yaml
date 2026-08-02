@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vajra-vllm
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: git@github.com:devanshkhandekar/vajra_azure-llmops.git
+    targetRevision: main
+    path: platform/kserve/vllm
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: inference
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vajra-core
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: git@github.com:devanshkhandekar/vajra_azure-llmops.git
+    targetRevision: main
+    path: platform/apps/core
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vajra
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
