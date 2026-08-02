@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vajra-ui
+  namespace: vajra
+  labels:
+    app.kubernetes.io/name: vajra-ui
+    app.kubernetes.io/part-of: vajra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vajra-ui
+  template:
+    metadata:
+      labels:
+        app: vajra-ui
+        app.kubernetes.io/name: vajra-ui
+        app.kubernetes.io/part-of: vajra
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: ui
+          image: ghcr.io/devanshkhandekar/vajra-ui:0.2.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8501
+          env:
+            - name: VAJRA_PREDICTION_API_URL
+              value: http://vajra-prediction-api.vajra.svc.cluster.local:8000
+            - name: VAJRA_LLM_PROVIDER
+              value: vllm
+            - name: VAJRA_LLM_BASE_URL
+              value: http://vajra-llm-predictor.inference.svc.cluster.local/v1
+            - name: VAJRA_LLM_API_KEY
+              value: EMPTY
+            - name: VAJRA_LLM_MODEL
+              value: vajra-llm
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          startupProbe:
+            httpGet:
+              path: /_stcore/health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: http
+            periodSeconds: 20
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vajra-ui
+  namespace: vajra
+spec:
+  type: ClusterIP
+  selector:
+    app: vajra-ui
+  ports:
+    - name: http
+      port: 8501
+      targetPort: http

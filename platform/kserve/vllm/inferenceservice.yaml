@@ -1,0 +1,117 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: vajra-llm
+  namespace: inference
+  labels:
+    app.kubernetes.io/name: vajra-llm
+    app.kubernetes.io/part-of: vajra
+    vajra.ai/runtime: vllm-cpu
+spec:
+  predictor:
+    minReplicas: 1
+    maxReplicas: 1
+
+    nodeSelector:
+      workload: llm
+
+    tolerations:
+      - key: workload
+        operator: Equal
+        value: llm
+        effect: NoSchedule
+
+    containers:
+      - name: kserve-container
+        image: vllm/vllm-openai-cpu:v0.26.0
+        imagePullPolicy: IfNotPresent
+
+        command:
+          - vllm
+
+        args:
+          - serve
+          - Qwen/Qwen2.5-1.5B-Instruct
+          - --host
+          - 0.0.0.0
+          - --port
+          - "8080"
+          - --dtype
+          - float32
+          - --max-model-len
+          - "2048"
+          - --max-num-seqs
+          - "1"
+          - --served-model-name
+          - vajra-llm
+
+        env:
+          - name: HF_HOME
+            value: /models/huggingface
+
+          - name: VLLM_CPU_KVCACHE_SPACE
+            value: "4"
+
+          - name: VLLM_CPU_OMP_THREADS_BIND
+            value: nobind
+
+        ports:
+          - name: http1
+            containerPort: 8080
+
+        resources:
+          requests:
+            cpu: 2800m
+            memory: 12Gi
+          limits:
+            cpu: 3500m
+            memory: 24Gi
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          seccompProfile:
+            type: Unconfined
+          capabilities:
+            add:
+              - SYS_NICE
+
+        startupProbe:
+          httpGet:
+            path: /v1/models
+            port: 8080
+          periodSeconds: 15
+          failureThreshold: 80
+          timeoutSeconds: 5
+
+        readinessProbe:
+          httpGet:
+            path: /v1/models
+            port: 8080
+          periodSeconds: 15
+          failureThreshold: 20
+          timeoutSeconds: 5
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 30
+          failureThreshold: 10
+          timeoutSeconds: 5
+
+        volumeMounts:
+          - name: model-cache
+            mountPath: /models/huggingface
+
+          - name: dshm
+            mountPath: /dev/shm
+
+    volumes:
+      - name: model-cache
+        persistentVolumeClaim:
+          claimName: vajra-vllm-cache
+
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 4Gi

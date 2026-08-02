@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vajra
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: inference
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kserve
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rag
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: airflow
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: backstage

@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vajra-prediction-api
+  namespace: vajra
+  labels:
+    app.kubernetes.io/name: vajra-prediction-api
+    app.kubernetes.io/part-of: vajra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vajra-prediction-api
+  template:
+    metadata:
+      labels:
+        app: vajra-prediction-api
+        app.kubernetes.io/name: vajra-prediction-api
+        app.kubernetes.io/part-of: vajra
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: api
+          image: ghcr.io/devanshkhandekar/vajra-prediction-api:0.2.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: VAJRA_PREDICTION_BACKEND
+              value: triton
+            - name: VAJRA_TRITON_URL
+              value: vajra-triton.inference.svc.cluster.local:8000
+            - name: VAJRA_TRITON_MODEL_NAME
+              value: vajra_predictor
+            - name: VAJRA_LLM_PROVIDER
+              value: vllm
+            - name: VAJRA_LLM_BASE_URL
+              value: http://vajra-llm-predictor.inference.svc.cluster.local/v1
+            - name: VAJRA_LLM_API_KEY
+              value: EMPTY
+            - name: VAJRA_LLM_MODEL
+              value: vajra-llm
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 20
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vajra-prediction-api
+  namespace: vajra
+spec:
+  type: ClusterIP
+  selector:
+    app: vajra-prediction-api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

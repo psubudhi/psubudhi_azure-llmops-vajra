@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vajra-vllm-cache
+  namespace: inference
+  labels:
+    app.kubernetes.io/name: vajra-llm
+    app.kubernetes.io/part-of: vajra
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 32Gi
